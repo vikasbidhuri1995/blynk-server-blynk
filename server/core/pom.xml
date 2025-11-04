@@ -31,6 +31,14 @@
             <version>${netty.version}</version>
             <classifier>${epoll.os}</classifier>
         </dependency>
+        
+        <!-- Add classes-only JAR for compilation on Windows -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-classes-epoll</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+        
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-boringssl-static</artifactId>

@@ -51,7 +51,7 @@ module cc.blynk.core {
     requires cc.blynk.server.notifications.twitter;
     requires cc.blynk.server.acme;
     requires cc.blynk.utils;
-    requires io.netty.transport.epoll;
+    requires io.netty.transport.classes.epoll;
     requires io.netty.common;
     requires io.netty.transport;
     requires io.netty.handler;
@@ -65,4 +65,28 @@ module cc.blynk.core {
     requires com.fasterxml.jackson.annotation;
     requires org.apache.logging.log4j;
     requires com.fasterxml.jackson.core;
+    
+    // Open packages for Jackson serialization/deserialization (Java 21 module system)
+    opens cc.blynk.server.core.model.auth to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.device to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.ui to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.ui.table to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.ui.reporting to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.ui.reporting.source to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.storage to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.storage.key to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.storage.value to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.others to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.others.eventor to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.others.webhook to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.others.rtc to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.outputs to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.outputs.graph to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.controls to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.notifications to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.widgets.ui.tiles to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.core.model.enums to com.fasterxml.jackson.databind;
+    opens cc.blynk.server.db.model to com.fasterxml.jackson.databind;
 }

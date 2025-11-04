@@ -16,12 +16,19 @@ import cc.blynk.server.notifications.mail.QrHolder;
 import cc.blynk.utils.StringUtils;
 import cc.blynk.utils.TokenGeneratorUtil;
 import cc.blynk.utils.properties.Placeholders;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import net.glxn.qrgen.core.image.ImageType;
-import net.glxn.qrgen.javase.QRCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import static cc.blynk.server.internal.CommonByteBufUtil.illegalCommandBody;
 import static cc.blynk.server.internal.CommonByteBufUtil.notificationError;
@@ -88,7 +95,7 @@ public final class MobileMailQRsLogic {
                 try {
                     String newToken = TokenGeneratorUtil.generateNewToken();
                     QrHolder qrHolder = new QrHolder(dash.id, -1, null, newToken,
-                                QRCode.from(newToken).to(ImageType.JPG).stream().toByteArray());
+                                generateQRCode(newToken));
                     FlashedToken flashedToken = new FlashedToken(to, newToken, publishAppId, dash.id, -1);
 
                     if (!dbManager.insertFlashedTokens(flashedToken)) {
@@ -138,7 +145,7 @@ public final class MobileMailQRsLogic {
         for (Device device : dash.devices) {
             String newToken = TokenGeneratorUtil.generateNewToken();
             qrHolders[i] = new QrHolder(dash.id, device.id, device.name, newToken,
-                    QRCode.from(newToken).to(ImageType.JPG).stream().toByteArray());
+                    generateQRCode(newToken));
             flashedTokens[i++] = new FlashedToken(user.email, newToken, appId, dash.id, device.id);
         }
 
@@ -147,5 +154,19 @@ public final class MobileMailQRsLogic {
         }
 
         return qrHolders;
+    }
+
+    private static byte[] generateQRCode(String text) {
+        try {
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 250, 250, hints);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(bitMatrix, "JPG", outputStream);
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate QR code", e);
+        }
     }
 }

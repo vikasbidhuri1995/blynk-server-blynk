@@ -47,13 +47,19 @@ import cc.blynk.utils.NumberUtil;
 import cc.blynk.utils.StringUtils;
 import cc.blynk.utils.TokenGeneratorUtil;
 import cc.blynk.utils.http.MediaType;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.common.BitMatrix;
 import io.netty.channel.ChannelHandler;
-import net.glxn.qrgen.core.image.ImageType;
-import net.glxn.qrgen.javase.QRCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.ByteArrayOutputStream;
 import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Map;
 
 import static cc.blynk.core.http.Response.badRequest;
 import static cc.blynk.core.http.Response.ok;
@@ -273,7 +279,7 @@ public class HttpAPILogic extends TokenBaseHttpHandler {
 
         //todo generate QR on client side.
         String cloneQrString = "blynk://token/clone/" + qrToken + "?server=" + host + "&port=" + httpsPort;
-        byte[] qrDataBinary = QRCode.from(cloneQrString).to(ImageType.PNG).stream().toByteArray();
+        byte[] qrDataBinary = generateQRCode(cloneQrString, "PNG");
         return ok(qrDataBinary, "image/png");
     }
 
@@ -634,4 +640,19 @@ public class HttpAPILogic extends TokenBaseHttpHandler {
         });
     }
 
+    private static byte[] generateQRCode(String text, String format) {
+        try {
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 250, 250, hints);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(bitMatrix, format, outputStream);
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate QR code", e);
+        }
+    }
+
 }
+

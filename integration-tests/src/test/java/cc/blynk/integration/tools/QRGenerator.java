@@ -4,15 +4,20 @@ import cc.blynk.server.core.BlockingIOProcessor;
 import cc.blynk.server.db.DBManager;
 import cc.blynk.server.db.model.Redeem;
 import cc.blynk.utils.TokenGeneratorUtil;
-import net.glxn.qrgen.core.image.ImageType;
-import net.glxn.qrgen.javase.QRCode;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.common.BitMatrix;
 
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Used for Redeem QRs generation.
@@ -45,7 +50,11 @@ public class QRGenerator {
 
     private static void generateQR(String text, Path outputFile) throws Exception {
         try (OutputStream out = Files.newOutputStream(outputFile)) {
-            QRCode.from(text).to(ImageType.JPG).writeTo(out);
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 250, 250, hints);
+            MatrixToImageWriter.writeToStream(bitMatrix, "JPG", out);
         }
     }
 

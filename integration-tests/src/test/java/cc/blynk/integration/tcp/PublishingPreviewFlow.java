@@ -26,18 +26,24 @@ import cc.blynk.server.core.model.widgets.ui.tiles.templates.PageTileTemplate;
 import cc.blynk.server.db.model.FlashedToken;
 import cc.blynk.server.notifications.mail.QrHolder;
 import cc.blynk.utils.AppNameUtil;
-import net.glxn.qrgen.core.image.ImageType;
-import net.glxn.qrgen.javase.QRCode;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.common.BitMatrix;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static cc.blynk.integration.TestUtil.appSync;
 import static cc.blynk.integration.TestUtil.b;
@@ -157,7 +163,7 @@ public class PublishingPreviewFlow extends SingleServerInstancePerTestWithDB {
 
         FlashedToken flashedToken = getFlashedTokenByDevice();
         assertNotNull(flashedToken);
-        QrHolder qrHolder = new QrHolder(1, -1, null, flashedToken.token, QRCode.from(flashedToken.token).to(ImageType.JPG).stream().toByteArray());
+        QrHolder qrHolder = new QrHolder(1, -1, null, flashedToken.token, generateQRCode(flashedToken.token));
 
         verify(holder.mailWrapper, timeout(500)).sendWithAttachment(eq(getUserName()), eq("AppPreview" + " - App details"), eq(holder.textHolder.dynamicMailBody.replace("{project_name}", "My Dashboard")), eq(qrHolder));
     }
@@ -187,7 +193,7 @@ public class PublishingPreviewFlow extends SingleServerInstancePerTestWithDB {
 
         FlashedToken flashedToken = getFlashedTokenByDevice();
         assertNotNull(flashedToken);
-        QrHolder qrHolder = new QrHolder(1, -1, null, flashedToken.token, QRCode.from(flashedToken.token).to(ImageType.JPG).stream().toByteArray());
+        QrHolder qrHolder = new QrHolder(1, -1, null, flashedToken.token, generateQRCode(flashedToken.token));
 
         verify(holder.mailWrapper, timeout(500)).sendWithAttachment(eq(getUserName()), eq("AppPreview" + " - App details"), eq(holder.textHolder.dynamicMailBody.replace("{project_name}", "My Dashboard")), eq(qrHolder));
     }
@@ -217,7 +223,7 @@ public class PublishingPreviewFlow extends SingleServerInstancePerTestWithDB {
 
         FlashedToken flashedToken = getFlashedTokenByDevice();
         assertNotNull(flashedToken);
-        QrHolder qrHolder = new QrHolder(1, -1, null, flashedToken.token, QRCode.from(flashedToken.token).to(ImageType.JPG).stream().toByteArray());
+        QrHolder qrHolder = new QrHolder(1, -1, null, flashedToken.token, generateQRCode(flashedToken.token));
 
         verify(holder.mailWrapper, timeout(500)).sendWithAttachment(eq(getUserName()), eq("AppPreview" + " - App details"), eq(holder.textHolder.dynamicMailBody.replace("{project_name}", "My Dashboard")), eq(qrHolder));
     }
@@ -1063,7 +1069,7 @@ public class PublishingPreviewFlow extends SingleServerInstancePerTestWithDB {
         int i = 0;
         for (Device device : devices) {
             String newToken = flashedTokens.get(i).token;
-            qrHolders[i] = new QrHolder(dashId, device.id, device.name, newToken, QRCode.from(newToken).to(ImageType.JPG).stream().toByteArray());
+            qrHolders[i] = new QrHolder(dashId, device.id, device.name, newToken, generateQRCode(newToken));
             i++;
         }
 
@@ -1100,4 +1106,19 @@ public class PublishingPreviewFlow extends SingleServerInstancePerTestWithDB {
         return list;
     }
 
+    private static byte[] generateQRCode(String text) {
+        try {
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 250, 250, hints);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(bitMatrix, "JPG", outputStream);
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate QR code", e);
+        }
+    }
+
 }
+

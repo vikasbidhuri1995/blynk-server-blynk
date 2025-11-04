@@ -2,13 +2,19 @@ package cc.blynk.server.notifications.mail;
 
 import cc.blynk.utils.AppNameUtil;
 import cc.blynk.utils.properties.MailProperties;
-import net.glxn.qrgen.core.image.ImageType;
-import net.glxn.qrgen.javase.QRCode;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.common.BitMatrix;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The Blynk Project.
@@ -45,8 +51,8 @@ public class MailWrapperTest {
                         "<br>\n" +
                         "<a href=\"https://www.blynk.cc\">blynk.cc</a>";
         QrHolder[] qrHolders = new QrHolder[] {
-                new QrHolder(1, 0, "My device", "12345678901", QRCode.from("21321321").to(ImageType.JPG).stream().toByteArray()),
-                new QrHolder(1, 1, "My device2", "12345678902", QRCode.from("21321321").to(ImageType.JPG).stream().toByteArray())
+                new QrHolder(1, 0, "My device", "12345678901", generateQRCode("21321321")),
+                new QrHolder(1, 1, "My device2", "12345678902", generateQRCode("21321321"))
         };
 
         MailProperties properties = new MailProperties(Collections.emptyMap());
@@ -70,8 +76,8 @@ public class MailWrapperTest {
             }
         }
 
-        QrHolder qrHolder = new QrHolder(1, 0, "device name", "123", QRCode.from("123").to(ImageType.JPG).stream().toByteArray());
-        QrHolder qrHolder2 = new QrHolder(1, 1, "device name", "123",  QRCode.from("124").to(ImageType.JPG).stream().toByteArray());
+        QrHolder qrHolder = new QrHolder(1, 0, "device name", "123", generateQRCode("123"));
+        QrHolder qrHolder2 = new QrHolder(1, 1, "device name", "123",  generateQRCode("124"));
 
         String to = "doom369@gmail.com";
         MailWrapper mailWrapper = new MailWrapper(properties, AppNameUtil.BLYNK);
@@ -137,4 +143,19 @@ public class MailWrapperTest {
                 "www.facebook.com/blynkapp");
     }
 
+    private static byte[] generateQRCode(String text) {
+        try {
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 250, 250, hints);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(bitMatrix, "JPG", outputStream);
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate QR code", e);
+        }
+    }
+
 }
+
